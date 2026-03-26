@@ -73,11 +73,87 @@ body {
   gap: 1rem;
 }
 
+.nav-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+}
+
+.nav-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.nav-btn.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
 .live-indicator {
   font-size: 0.9rem;
   letter-spacing: 2px;
   color: var(--warning-color);
   font-weight: 600;
+}
+
+/* ==================== BUTTONS ==================== */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn:hover {
+  background: var(--secondary-color);
+  transform: translateY(-2px);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-danger {
+  background: var(--danger-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-success {
+  background: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #059669;
 }
 
 /* ==================== DASHBOARD ==================== */
@@ -792,4 +868,47 @@ body {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
+}
+
+/* ==================== LEAFLET MAP ==================== */
+.map-card {
+  min-height: 450px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-card > [style*="height"] {
+  border-radius: 4px;
+}
+
+/* Ensure Leaflet controls are visible */
+.leaflet-container {
+  font-family: inherit;
+  background-color: var(--dark-bg);
+}
+
+.leaflet-control-zoom {
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+}
+
+.leaflet-control-zoom a {
+  color: var(--text-primary);
+  background: var(--card-bg);
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.leaflet-popup-tip {
+  background: var(--card-bg);
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ThreatMap from "./ThreatMap";
+import MapView from "./MapView";   // ✅ IMPORTANT
 import ThreatForecast from "./ThreatForecast";
 import RiskIndex from "./RiskIndex";
 import SuggestedRoutes from "./SuggestedRoutes";
@@ -7,16 +7,23 @@ import CrowdDensity from "./CrowdDensity";
 import GuardianNetwork from "./GuardianNetwork";
 import IncidentLog from "./IncidentLog";
 import AIPredictionEngine from "./AIPredictionEngine";
+import { useSentinelStore } from "../store/sentinelStore";
 
-function Dashboard() {
+function Dashboard({ setActiveView }) {
+  const userLocation = useSentinelStore((s) => s.userLocation);
   const [simulationMode, setSimulationMode] = useState(false);
   const [threatLevel, setThreatLevel] = useState("low");
-  const [userLocation, setUserLocation] = useState({ lat: 40.7128, lng: -74.006 });
 
   useEffect(() => {
     if (simulationMode) {
       const interval = setInterval(() => {
-        setThreatLevel(Math.random() > 0.6 ? "high" : Math.random() > 0.3 ? "medium" : "low");
+        setThreatLevel(
+          Math.random() > 0.6
+            ? "high"
+            : Math.random() > 0.3
+            ? "medium"
+            : "low"
+        );
       }, 5000);
       return () => clearInterval(interval);
     }
@@ -24,42 +31,88 @@ function Dashboard() {
 
   const handleSimulation = (type) => {
     setSimulationMode(true);
-    if (type === "safe") {
-      setThreatLevel("low");
-    } else if (type === "risk") {
-      setThreatLevel("medium");
-    } else if (type === "imminent") {
-      setThreatLevel("high");
-    }
+    if (type === "safe") setThreatLevel("low");
+    else if (type === "risk") setThreatLevel("medium");
+    else if (type === "imminent") setThreatLevel("high");
   };
 
   return (
     <div className="dashboard">
-      {/* TOP SECTION - TITLE & ALERTS */}
+
+      {/* 🔝 HEADER */}
       <div className="dashboard-header">
         <h1 className="main-title">
           DON'T ESCAPE DANGER.<br />
           <span className="highlight">NEVER REACH IT.</span>
         </h1>
+
         <p className="subtitle">
-          SENTINEL predicts where threats will form — before they happen — and invisibly reroutes you,
-          activates nearby infrastructure, and crowdsources a protective net around you.
+          SENTINEL predicts where threats will form — before they happen — and reroutes you safely.
         </p>
+
         <div className="alert-bar">
           <span className="alert-icon">▲</span>
-          <span className="alert-text">Crowd spike detected — MG Road junction — 11:42 PM</span>
+          <span className="alert-text">
+            Crowd spike detected — MG Road — 11:42 PM
+          </span>
+        </div>
+
+        {userLocation && (
+          <div style={{ marginTop: "1rem", padding: "0.75rem", background: "#2a3a4a", borderRadius: "6px", fontSize: "0.9rem", color: "#cbd5e1" }}>
+            📍 <strong>Your Location:</strong> {userLocation.lat.toFixed(4)}°, {userLocation.lng.toFixed(4)}°
+          </div>
+        )}
+      </div>
+
+      {/* 🎯 QUICK DESTINATIONS */}
+      <div style={{ marginBottom: "2rem" }}>
+        <h3 style={{ fontSize: "1rem", letterSpacing: "2px", marginBottom: "1rem" }}>
+          📍 QUICK DESTINATIONS
+        </h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" }}>
+          {[
+            { name: "Station", icon: "🚂" },
+            { name: "Hospital", icon: "🏥" },
+            { name: "Market", icon: "🛒" },
+            { name: "Park", icon: "🌳" },
+            { name: "Tech Hub", icon: "💻" },
+            { name: "Police", icon: "🚔" }
+          ].map((dest) => (
+            <button
+              key={dest.name}
+              className="btn"
+              onClick={() => setActiveView && setActiveView("search")}
+              style={{
+                padding: "0.75rem",
+                fontSize: "0.85rem",
+                background: "#2a3a4a",
+                cursor: "pointer"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#3b82f6";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#2a3a4a";
+              }}
+            >
+              {dest.icon} {dest.name}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* MAIN GRID */}
+      {/* 🔥 MAIN GRID */}
       <div className="dashboard-grid">
-        {/* LEFT COLUMN - MAP & FORECAST */}
+
+        {/* LEFT SIDE → MAP */}
         <div className="left-column">
-          <ThreatMap threatLevel={threatLevel} />
+          {/* ✅ THIS IS THE FIX */}
+          <MapView />
+
           <ThreatForecast />
         </div>
 
-        {/* RIGHT COLUMN - STATS & ANALYSIS */}
+        {/* RIGHT SIDE */}
         <div className="right-column">
           <RiskIndex />
           <SuggestedRoutes />
@@ -75,36 +128,47 @@ function Dashboard() {
 
         <div className="right-column">
           <IncidentLog />
+          <button 
+            className="btn btn-primary" 
+            onClick={() => setActiveView && setActiveView("search")}
+            style={{ width: "100%", padding: "1rem", marginTop: "1rem", background: "#059669" }}
+          >
+            🔍 Search Destination & Compare Routes
+          </button>
+          <button 
+            className="btn btn-primary" 
+            onClick={() => setActiveView && setActiveView("safe-routes")}
+            style={{ width: "100%", padding: "1rem", marginTop: "0.5rem" }}
+          >
+            🛣️ View Safe Routes on Map
+          </button>
         </div>
       </div>
 
-      {/* AI PREDICTION ENGINE */}
+      {/* AI ENGINE */}
       <AIPredictionEngine />
 
-      {/* SIMULATION CONTROLS */}
+      {/* 🎮 SIMULATION */}
       <div className="simulation-section">
         <h4 className="section-label">SIMULATE ▸</h4>
+
         <div className="simulation-buttons">
-          <button 
-            className="sim-btn safe"
-            onClick={() => handleSimulation("safe")}
-          >
+          <button className="sim-btn safe" onClick={() => handleSimulation("safe")}>
             ✓ Safe Journey
           </button>
-          <button 
-            className="sim-btn risk"
-            onClick={() => handleSimulation("risk")}
-          >
+
+          <button className="sim-btn risk" onClick={() => handleSimulation("risk")}>
             ⚠ Entering Risk Zone
           </button>
-          <button 
-            className="sim-btn danger"
-            onClick={() => handleSimulation("imminent")}
-          >
+
+          <button className="sim-btn danger" onClick={() => handleSimulation("imminent")}>
             🛑 Threat Imminent
           </button>
         </div>
-        <p className="sim-text">Interactive prototype — click above to see SENTINEL respond</p>
+
+        <p className="sim-text">
+          Click above to simulate SENTINEL responses
+        </p>
       </div>
     </div>
   );

@@ -118,9 +118,10 @@ export async function getRisk(features) {
   } catch (error) {
     console.error("Error getting risk:", error);
     return {
-      risk: Math.random() > 0.5 ? "HIGH" : "LOW",
-      score: Math.random()
-    };
+      risk: Math.random() * 100,
+      threat_level: "MODERATE",
+      confidence: 0.8
+      };
   }
 }
 
@@ -235,5 +236,36 @@ export async function alertSafeHavens(lat, lng) {
     return await response.json();
   } catch (error) {
     console.error("Error alerting safe havens:", error);
+  }
+}
+
+// ─── Route Evaluation (ML) ───────────────────────────────────
+
+export async function evaluateRoute(route) {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/route/evaluate`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ route })
+      }
+    );
+
+    if (!response.ok) throw new Error("Failed to evaluate route");
+
+    return await response.json();
+
+  } catch (error) {
+    console.error("Error evaluating route:", error);
+
+    // fallback (demo)
+    const avg = Math.random() * 100;
+
+    return {
+      avg_risk: avg,
+      max_risk: avg + 10,
+      safe: avg < 40
+    };
   }
 }
