@@ -11,7 +11,30 @@ import AIPredictionEngine from "./AIPredictionEngine";
 function Dashboard() {
   const [simulationMode, setSimulationMode] = useState(false);
   const [threatLevel, setThreatLevel] = useState("low");
-  const [userLocation, setUserLocation] = useState({ lat: 40.7128, lng: -74.006 });
+  const [userLocation, setUserLocation] = useState({ lat: 12.9716, lng: 77.5946 }); // Bengaluru center
+
+  // Request browser geolocation on mount
+  useEffect(() => {
+    console.log("🔍 Requesting geolocation...");
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("✅ Location granted:", position.coords);
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.warn("❌ Geolocation error:", error.code, error.message);
+          // Keep default Bengaluru location
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      console.warn("❌ Geolocation not available");
+    }
+  }, []);
 
   useEffect(() => {
     if (simulationMode) {
@@ -55,13 +78,13 @@ function Dashboard() {
       <div className="dashboard-grid">
         {/* LEFT COLUMN - MAP & FORECAST */}
         <div className="left-column">
-          <ThreatMap threatLevel={threatLevel} />
-          <ThreatForecast />
+          <ThreatMap userLocation={userLocation} />
+          <ThreatForecast userLocation={userLocation} />
         </div>
 
         {/* RIGHT COLUMN - STATS & ANALYSIS */}
         <div className="right-column">
-          <RiskIndex />
+          <RiskIndex userLocation={userLocation} />
           <SuggestedRoutes />
         </div>
       </div>

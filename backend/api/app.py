@@ -2,207 +2,183 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import os
+import numpy as np
 from datetime import datetime
 import random
+import openrouteservice
 
 app = Flask(__name__)
 CORS(app)
 
 # ─────────────────────────────────────────────────────────────
-# LOAD MODEL (FIXED PATH)
+# 🔑 ADD YOUR API KEY HERE
+# ─────────────────────────────────────────────────────────────
+client = openrouteservice.Client(key="YOUR_API_KEY")
+
+# ─────────────────────────────────────────────────────────────
+# LOAD MODELS
 # ─────────────────────────────────────────────────────────────
 try:
-    base_dir = os.path.dirname(__file__)  # backend/api
-    model_path = os.path.abspath(os.path.join(base_dir, "../model/sentinel_model.pkl"))
+    base_dir = os.path.dirname(__file__)
+    model_dir = os.path.abspath(os.path.join(base_dir, "../model"))
+    
+    risk_model = joblib.load(os.path.join(model_dir, "risk_model.pkl"))
+    route_model = joblib.load(os.path.join(model_dir, "route_model.pkl"))
 
-    model = joblib.load(model_path)
-    print("✅ Model loaded successfully:", model_path)
+    print("✅ Models loaded successfully")
 
 except Exception as e:
-    print("❌ Model not found:", e)
-    print("⚠️ Using mock predictions")
-    model = None
-
-
-# ─────────────────────────────────────────────────────────────
-# PREDICTION ENDPOINT
-# ─────────────────────────────────────────────────────────────
-@app.route("/predict", methods=["POST"])
-def predict():
-    data = request.json
-
-    features = [[
-        data.get("time", 12),
-        data.get("day", 1),
-        data.get("crowd", 50),
-        data.get("lighting", 80),
-        data.get("incidents", 2)
-    ]]
-
-    if model:
-        risk = int(model.predict(features)[0])
-        confidence = float(max(model.predict_proba(features)[0]))
-    else:
-        risk = random.randint(0, 100)
-        confidence = round(random.uniform(0.7, 0.95), 2)
-
-    return jsonify({
-        "risk": risk,
-        "threat_level": get_threat_level(risk),
-        "confidence": confidence,
-        "timestamp": datetime.now().isoformat()
-    })
-
+    print(f"❌ Model load error: {e}")
+    risk_model = None
+    route_model = None
 
 # ─────────────────────────────────────────────────────────────
-# HELPER FUNCTION
+# HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────────
-def get_threat_level(risk):
-    if risk > 70:
+def get_threat_level(score):
+    if score >= 70:
         return "HIGH"
-    elif risk > 40:
+    elif score >= 40:
         return "MODERATE"
     return "SAFE"
 
 
+def calculate_route_risk(coords):
+    risks = []
+
+    for coord in coords[::10]:  # sample points
+        lat, lng = coord[1], coord[0]
+
+        hour = datetime.now().hour
+        day = datetime.now().weekday()
+
+        lighting = random.uniform(40, 90)
+        police_presence = random.uniform(30, 80)
+        incidents = np.random.poisson(3)
+        crowd = random.uniform(20, 80)
+        traffic = random.uniform(30, 90)
+
+        features = np.array([[ 
+            hour, day, lighting, police_presence,
+            incidents, crowd, lat, lng, traffic
+        ]])
+
+        if risk_model:
+            risk = float(risk_model.predict(features)[0])
+        else:
+            risk = random.uniform(20, 80)
+
+        risks.append(risk)
+
+    return sum(risks) / len(risks)
+
 # ─────────────────────────────────────────────────────────────
-# POINT RISK (NOW USING MODEL)
+# 📍 POINT RISK
 # ─────────────────────────────────────────────────────────────
 @app.route("/api/risk/point", methods=["GET"])
 def get_point_risk():
-    lat = request.args.get("lat", type=float, default=0)
-    lng = request.args.get("lng", type=float, default=0)
+    lat = request.args.get("lat", type=float, default=12.9716)
+    lng = request.args.get("lng", type=float, default=77.5946)
 
-    # Dummy feature generation (replace with real data later)
-    features = [[
-        random.randint(0, 23),   # time
-        random.randint(1, 7),    # day
-        random.randint(0, 100),  # crowd
-        random.randint(0, 100),  # lighting
-        random.randint(0, 10)    # incidents
-    ]]
+    hour = datetime.now().hour
+    day = datetime.now().weekday()
 
-    if model:
-        risk_score = float(model.predict(features)[0])
-        confidence = float(max(model.predict_proba(features)[0]))
+    lighting = random.uniform(40, 90)
+    police = random.uniform(30, 80)
+    incidents = np.random.poisson(3)
+    crowd = random.uniform(20, 80)
+    traffic = random.uniform(30, 90)
+
+    features = np.array([[ 
+        hour, day, lighting, police, incidents,
+        crowd, lat, lng, traffic
+    ]])
+
+    if risk_model:
+        risk_score = float(risk_model.predict(features)[0])
     else:
-        risk_score = random.uniform(0, 100)
-        confidence = random.uniform(0.8, 0.99)
+        risk_score = random.uniform(20, 80)
 
     return jsonify({
         "lat": lat,
         "lng": lng,
         "risk_score": round(risk_score, 2),
-        "threat_level": get_threat_level(risk_score),
-        "confidence": round(confidence, 2),
-        "timestamp": datetime.now().isoformat()
+        "threat_level": get_threat_level(risk_score)
     })
 
-
 # ─────────────────────────────────────────────────────────────
-# STATS
-# ─────────────────────────────────────────────────────────────
-@app.route("/api/risk/stats", methods=["GET"])
-def get_risk_stats():
-    total = 145
-    high = random.randint(5, 15)
-    moderate = random.randint(25, 40)
-    safe = total - high - moderate
-
-    return jsonify({
-        "total_zones": total,
-        "high_risk_zones": high,
-        "moderate_zones": moderate,
-        "safe_zones": safe,
-        "timestamp": datetime.now().isoformat()
-    })
-
-
-# ─────────────────────────────────────────────────────────────
-# ZONES
-# ─────────────────────────────────────────────────────────────
-@app.route("/api/risk/zones", methods=["POST"])
-def get_risk_zones():
-    bounds = request.json
-
-    features = []
-    for _ in range(random.randint(5, 15)):
-        lat = random.uniform(bounds.get("south", 0), bounds.get("north", 1))
-        lng = random.uniform(bounds.get("west", 0), bounds.get("east", 1))
-
-        risk = random.uniform(20, 95)
-
-        features.append({
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [lng, lat]
-            },
-            "properties": {
-                "risk_score": round(risk, 2),
-                "threat_level": get_threat_level(risk)
-            }
-        })
-
-    return jsonify({
-        "type": "FeatureCollection",
-        "features": features
-    })
-
-
-# ─────────────────────────────────────────────────────────────
-# FORECAST
-# ─────────────────────────────────────────────────────────────
-@app.route("/api/threat/forecast", methods=["GET"])
-def get_threat_forecast():
-    lat = request.args.get("lat", type=float, default=0)
-    lng = request.args.get("lng", type=float, default=0)
-
-    forecast = []
-    base = random.uniform(30, 80)
-
-    for i in range(0, 45, 15):
-        risk = base + random.uniform(-10, 10)
-        forecast.append({
-            "time_offset": i,
-            "risk_score": round(risk, 2),
-            "threat_level": get_threat_level(risk)
-        })
-
-    return jsonify({
-        "location": {"lat": lat, "lng": lng},
-        "forecast": forecast
-    })
-
-
-# ─────────────────────────────────────────────────────────────
-# ROUTES
+# 🗺️ ROUTE SUGGESTION (REAL)
 # ─────────────────────────────────────────────────────────────
 @app.route("/api/route/suggest", methods=["POST"])
 def suggest_route():
+    data = request.json or {}
+
+    start = data.get("start")   # [lng, lat]
+    end = data.get("end")
+
+    if not start or not end:
+        return jsonify({"error": "Start and End required"}), 400
+
+    try:
+        routes_data = client.directions(
+            coordinates=[start, end],
+            profile='driving-car',
+            format='geojson',
+            alternative_routes=True
+        )
+
+        routes = []
+
+        for idx, route in enumerate(routes_data['features']):
+            coords = route['geometry']['coordinates']
+
+            distance = route['properties']['summary']['distance'] / 1000
+            duration = route['properties']['summary']['duration'] / 60
+
+            risk_score = calculate_route_risk(coords)
+
+            routes.append({
+                "id": f"route_{idx}",
+                "coords": coords,
+                "distance": round(distance, 2),
+                "time": round(duration),
+                "risk_score": round(risk_score, 2)
+            })
+
+        shortest = min(routes, key=lambda x: x["distance"])
+        safest = min(routes, key=lambda x: x["risk_score"])
+
+        return jsonify({
+            "shortest": shortest,
+            "safest": safest,
+            "all_routes": routes
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+# ─────────────────────────────────────────────────────────────
+# 📊 STATS
+# ─────────────────────────────────────────────────────────────
+@app.route("/api/risk/stats", methods=["GET"])
+def stats():
     return jsonify({
-        "routes": [
-            {"name": "Safe Route", "safety_score": 90},
-            {"name": "Fast Route", "safety_score": 60},
-            {"name": "Risky Route", "safety_score": 30}
-        ]
+        "city_risk": random.uniform(30, 70),
+        "incidents_24h": random.randint(10, 40)
     })
 
-
 # ─────────────────────────────────────────────────────────────
-# HEALTH CHECK
+# ❤️ HEALTH
 # ─────────────────────────────────────────────────────────────
-@app.route("/health", methods=["GET"])
+@app.route("/health")
 def health():
     return jsonify({
-        "status": "healthy",
-        "model_loaded": model is not None,
-        "timestamp": datetime.now().isoformat()
+        "status": "running",
+        "model_loaded": risk_model is not None
     })
 
-
 # ─────────────────────────────────────────────────────────────
-# RUN SERVER
+# RUN
 # ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
