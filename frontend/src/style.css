@@ -1,0 +1,795 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-color: #3b82f6;
+  --primary-dark: #1e40af;
+  --secondary-color: #8b5cf6;
+  --accent-color: #ec4899;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --dark-bg: #1a1f2e;
+  --darker-bg: #0f1419;
+  --card-bg: #242d3a;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --border-color: #334155;
+  --high-risk: #ff4444;
+  --moderate-risk: #ff9944;
+  --safe-zone: #44ff88;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--dark-bg);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ==================== NAVBAR ==================== */
+.sentinel-navbar {
+  background: var(--darker-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sentinel-logo {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.navbar-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.live-indicator {
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  color: var(--warning-color);
+  font-weight: 600;
+}
+
+/* ==================== DASHBOARD ==================== */
+.dashboard {
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 3rem;
+  text-align: left;
+  border-bottom: 3px solid var(--text-primary);
+  padding-bottom: 2rem;
+}
+
+.main-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  letter-spacing: -1px;
+}
+
+.main-title .highlight {
+  color: var(--warning-color);
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 800px;
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+}
+
+.alert-bar {
+  background: rgba(255, 152, 0, 0.1);
+  border-left: 4px solid var(--warning-color);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.alert-icon {
+  color: var(--warning-color);
+  font-weight: bold;
+  font-size: 1.3rem;
+}
+
+.alert-text {
+  color: var(--text-secondary);
+}
+
+/* ==================== DASHBOARD GRID ==================== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ==================== CARDS ==================== */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
+}
+
+.card-header {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.card-header h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: 1px;
+}
+
+.card-header .icon {
+  font-size: 1.3rem;
+}
+
+.card-header .subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ==================== THREAT MAP ==================== */
+.threat-map-card {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.threat-map {
+  flex: 1;
+  background: linear-gradient(135deg, #2a3a4a 0%, #1a2a3a 100%);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  min-height: 300px;
+}
+
+.map-legend {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-dot.high-risk {
+  background: var(--high-risk);
+}
+
+.legend-dot.moderate {
+  background: var(--moderate-risk);
+}
+
+.legend-dot.safe {
+  background: var(--safe-zone);
+}
+
+.legend-dot.you {
+  background: var(--primary-color);
+}
+
+.legend-dot.guardian {
+  background: var(--safe-zone);
+}
+
+/* ==================== THREAT FORECAST ==================== */
+.threat-forecast-card {
+  min-height: 300px;
+}
+
+.threat-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.timeline-item {
+  padding: 1rem;
+  border-radius: 4px;
+  border-left: 4px solid;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.timeline-item.high {
+  border-left-color: var(--high-risk);
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.timeline-item.moderate {
+  border-left-color: var(--moderate-risk);
+  background: rgba(255, 153, 68, 0.1);
+}
+
+.timeline-item.safe {
+  border-left-color: var(--safe-zone);
+  background: rgba(68, 255, 136, 0.1);
+}
+
+.timeline-item .time {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.timeline-item .status {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.timeline-item.high .status {
+  color: var(--high-risk);
+}
+
+.timeline-item.moderate .status {
+  color: var(--moderate-risk);
+}
+
+.timeline-item.safe .status {
+  color: var(--safe-zone);
+}
+
+.timeline-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ==================== RISK INDEX ==================== */
+.risk-index-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 200px;
+}
+
+.risk-score {
+  margin-bottom: 1rem;
+}
+
+.risk-score h2 {
+  font-size: 4rem;
+  font-weight: 900;
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.risk-score .risk-label {
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.risk-description {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.risk-description p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ==================== SUGGESTED ROUTES ==================== */
+.routes-card {
+  min-height: auto;
+}
+
+.routes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.route-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.route-item.safest {
+  border: 2px solid var(--warning-color);
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.route-number {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--text-secondary);
+  min-width: 50px;
+  text-align: center;
+}
+
+.route-details h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+}
+
+.route-details .route-info {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.route-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.route-badge.safest {
+  background: var(--safe-zone);
+  color: #000;
+}
+
+.route-badge.moderate {
+  background: rgba(255, 152, 0, 0.2);
+  color: var(--moderate-risk);
+}
+
+.route-badge.avoid {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger-color);
+}
+
+/* ==================== CROWD DENSITY ==================== */
+.crowd-density-card {
+  min-height: auto;
+}
+
+.chart {
+  padding: 1rem 0;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  height: 120px;
+}
+
+.bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.bar-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  order: 2;
+}
+
+.bar-wrapper {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  display: flex;
+  align-items: flex-end;
+  order: 1;
+}
+
+.bar {
+  width: 100%;
+  background: linear-gradient(to top, var(--primary-color), var(--primary-color));
+  border-radius: 2px 2px 0 0;
+  transition: all 0.3s ease;
+  min-height: 10px;
+}
+
+.bar.current {
+  background: var(--warning-color);
+  box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+}
+
+/* ==================== GUARDIAN NETWORK ==================== */
+.guardian-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.guardian-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.guardian-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.guardian-count .number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--safe-zone);
+}
+
+.guardian-count .text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+.guardian-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ==================== INCIDENT LOG ==================== */
+.incident-log-card {
+  min-height: auto;
+}
+
+.log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 3px solid var(--border-color);
+}
+
+.log-entry.guard {
+  border-left-color: var(--safe-zone);
+  background: rgba(68, 255, 136, 0.05);
+}
+
+.log-entry.info {
+  border-left-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.log-entry.clear {
+  border-left-color: var(--safe-zone);
+  background: rgba(68, 255, 136, 0.05);
+}
+
+.log-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 0.35rem 0.6rem;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.log-entry.guard .log-badge {
+  background: rgba(68, 255, 136, 0.2);
+  color: var(--safe-zone);
+}
+
+.log-entry.info .log-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--primary-color);
+}
+
+.log-entry.clear .log-badge {
+  background: rgba(68, 255, 136, 0.2);
+  color: var(--safe-zone);
+}
+
+.log-text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.log-time {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: right;
+  min-width: 30px;
+}
+
+/* ==================== AI PREDICTION ENGINE ==================== */
+.ai-engine-card {
+  margin-bottom: 2rem;
+}
+
+.ai-factors {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.factor-item {
+  display: grid;
+  grid-template-columns: 150px 1fr 80px;
+  gap: 1rem;
+  align-items: center;
+}
+
+.factor-label {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.factor-bar {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  height: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.factor-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  transition: width 0.5s ease;
+}
+
+.factor-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-align: right;
+}
+
+/* ==================== SIMULATION SECTION ==================== */
+.simulation-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.section-label {
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+}
+
+.simulation-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.sim-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.sim-btn:hover {
+  transform: translateY(-2px);
+}
+
+.sim-btn.safe {
+  border-color: var(--safe-zone);
+  color: var(--safe-zone);
+}
+
+.sim-btn.safe:hover {
+  background: rgba(68, 255, 136, 0.1);
+}
+
+.sim-btn.risk {
+  border-color: var(--moderate-risk);
+  color: var(--moderate-risk);
+}
+
+.sim-btn.risk:hover {
+  background: rgba(255, 153, 68, 0.1);
+}
+
+.sim-btn.danger {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+}
+
+.sim-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.sim-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+  font-style: italic;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .map-legend {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .sentinel-navbar {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .main-title {
+    font-size: 2.5rem;
+  }
+
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .simulation-buttons {
+    flex-direction: column;
+  }
+
+  .sim-btn {
+    width: 100%;
+  }
+
+  .factor-item {
+    grid-template-columns: 100px 1fr 60px;
+    font-size: 0.9rem;
+  }
+
+  .threat-map,
+  .threat-map-card {
+    min-height: 250px;
+  }
+
+  .route-item {
+    grid-template-columns: 1fr;
+  }
+
+  .map-legend {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-title {
+    font-size: 1.8rem;
+  }
+
+  .alert-bar {
+    font-size: 0.85rem;
+  }
+
+  .card-header h3 {
+    font-size: 0.95rem;
+  }
+
+  .risk-score h2 {
+    font-size: 2.5rem;
+  }
+
+  .factor-item {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
