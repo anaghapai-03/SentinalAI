@@ -20,7 +20,7 @@ function IncidentLog() {
       id: 3,
       type: "CLEAR",
       icon: "✓",
-      title: "North Corridor — all zones nominal now",
+      title: "Whitefield Main Road — all zones nominal now",
       time: "now"
     }
   ];

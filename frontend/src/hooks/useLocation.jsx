@@ -16,8 +16,8 @@ export function useLocation() {
     // Check if geolocation is supported
     if (!navigator.geolocation) {
       setError("Geolocation not supported on this device");
-      // Fall back to demo city center (San Francisco)
-      setUserLocation({ lat: 37.7749, lng: -122.4194 });
+      // Fall back to demo city center (Bangalore)
+      setUserLocation({ lat: 12.9716, lng: 77.5946 });
       return;
     }
 
@@ -36,8 +36,8 @@ export function useLocation() {
           switch (error.code) {
             case error.PERMISSION_DENIED:
               setError("Location permission denied. Using demo location.");
-              // Fall back to demo city center
-              setUserLocation({ lat: 37.7749, lng: -122.4194 });
+              // Fall back to demo city center (Bangalore)
+              setUserLocation({ lat: 12.9716, lng: 77.5946 });
               break;
             case error.POSITION_UNAVAILABLE:
               setError("Location information is unavailable.");
@@ -57,8 +57,8 @@ export function useLocation() {
       );
     } catch (err) {
       setError(err.message);
-      // Fall back to demo location
-      setUserLocation({ lat: 37.7749, lng: -122.4194 });
+      // Fall back to demo location (Bangalore)
+      setUserLocation({ lat: 12.9716, lng: 77.5946 });
     }
 
     // Cleanup function
@@ -79,7 +79,7 @@ export function useLocationOnce() {
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setError("Geolocation not supported");
-      setUserLocation({ lat: 37.7749, lng: -122.4194 });
+      setUserLocation({ lat: 12.9716, lng: 77.5946 });
       return;
     }
 
@@ -92,7 +92,7 @@ export function useLocationOnce() {
       },
       (error) => {
         setError(`Location error: ${error.message}`);
-        setUserLocation({ lat: 37.7749, lng: -122.4194 });
+        setUserLocation({ lat: 12.9716, lng: 77.5946 });
       },
       { enableHighAccuracy: true, timeout: 5000 }
     );

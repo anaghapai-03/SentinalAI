@@ -54,9 +54,9 @@ function ThreatMap({ threatLevel }) {
               const [lng, lat] = coords;
               const risk = zone.properties.risk_score;
 
-              let color = "#1D9E75";
-              if (risk > 70) color = "#E24B4A";
-              else if (risk > 40) color = "#EF9F27";
+              let color = "#22C55E";    // Green for SAFE (<30%)
+              if (risk > 50) color = "#EF4444";    // Red for HIGH risk (>50%)
+              else if (risk > 30) color = "#F97316";  // Orange for MODERATE (30-50%)
 
               return (
                 <CircleMarker
@@ -84,13 +84,13 @@ function ThreatMap({ threatLevel }) {
 
       <div className="map-legend">
         <div className="legend-item">
-          <span className="legend-dot high-risk"></span> High Risk (&gt;70%)
+          <span className="legend-dot high-risk"></span> High Risk (&gt;50%)
         </div>
         <div className="legend-item">
-          <span className="legend-dot moderate"></span> Moderate (40-70%)
+          <span className="legend-dot moderate"></span> Moderate (30-50%)
         </div>
         <div className="legend-item">
-          <span className="legend-dot safe"></span> Safe (&lt;40%)
+          <span className="legend-dot safe"></span> Safe (&lt;30%)
         </div>
       </div>
     </div>

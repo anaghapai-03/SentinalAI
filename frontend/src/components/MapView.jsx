@@ -9,7 +9,7 @@ function MapView() {
   const riskMarkers = useRef([]);
   const userMarker = useRef(null);
   const [riskZones, setRiskZones] = useState([]);
-  const userLocation = useSentinelStore((s) => s.userLocation) || { lat: 37.7749, lng: -122.4194 };
+  const userLocation = useSentinelStore((s) => s.userLocation) || { lat: 12.9716, lng: 77.5946 };
 
   // Fetch risk zones from backend
   const fetchRiskZones = useCallback(async (bounds) => {
@@ -53,11 +53,11 @@ function MapView() {
     }
   }, []);
 
-  // Get color based on risk score (UPDATED THRESHOLDS)
+  // Get color based on risk score (ALIGNED WITH BACKEND THRESHOLDS)
   const getRiskColor = useCallback((riskScore) => {
-    if (riskScore > 50) return "#FF0000";    // Red for HIGH risk (>50%)
-    if (riskScore > 30) return "#FF9800";    // Orange for MODERATE risk (30-50%)
-    return "#4CAF50";                        // Green for LOW risk (<30%)
+    if (riskScore > 50) return "#EF4444";    // Red for HIGH risk (>50%)
+    if (riskScore > 30) return "#F97316";    // Orange for MODERATE risk (30-50%)
+    return "#22C55E";                        // Green for SAFE risk (<30%)
   }, []);
 
   // Initialize map once
@@ -67,7 +67,7 @@ function MapView() {
 
     // Initialize map
     map.current = L.map(mapContainer.current).setView(
-      [userLocation.lat, userLocation.lng],
+      [12.9716, 77.5946],
       13
     );
 

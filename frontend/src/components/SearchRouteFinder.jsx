@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
 });
 
 function SearchRouteFinder({ setActiveView }) {
-  const storeLocation = useSentinelStore((s) => s.userLocation) || { lat: 37.7749, lng: -122.4194 };
+  const storeLocation = useSentinelStore((s) => s.userLocation) || { lat: 12.9716, lng: 77.5946 };
   const [userLocation, setUserLocation] = useState(storeLocation);
   const [searchQuery, setSearchQuery] = useState("");
   const [nearbyDestinations, setNearbyDestinations] = useState([]);
@@ -352,12 +352,12 @@ function SearchRouteFinder({ setActiveView }) {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
             {[
-              { name: "Central Station", icon: "🚂", cat: "Transport", lat: 37.7847, lng: -122.4086 },
-              { name: "City Hospital", icon: "🏥", cat: "Health", lat: 37.7694, lng: -122.4862 },
-              { name: "Downtown Market", icon: "🛒", cat: "Shopping", lat: 37.7797, lng: -122.3954 },
-              { name: "Central Park", icon: "🌳", cat: "Recreation", lat: 37.7749, lng: -122.4194 },
-              { name: "Tech Hub", icon: "💻", cat: "Business", lat: 37.7694, lng: -122.3862 },
-              { name: "Police Station", icon: "🚔", cat: "Safety", lat: 37.7749, lng: -122.4194 }
+              { name: "Bangalore City Railway Station", icon: "🚂", cat: "Transport", lat: 12.9808, lng: 77.6353 },
+              { name: "Fortis Hospital", icon: "🏥", cat: "Health", lat: 12.9716, lng: 77.5946 },
+              { name: "Commercial Street", icon: "🛒", cat: "Shopping", lat: 12.9797, lng: 77.6054 },
+              { name: "Lalbagh Botanical Garden", icon: "🌳", cat: "Recreation", lat: 12.9352, lng: 77.5850 },
+              { name: "Bangalore Tech Park", icon: "💻", cat: "Business", lat: 13.0211, lng: 77.6396 },
+              { name: "MG Road Police Station", icon: "🚔", cat: "Safety", lat: 12.9797, lng: 77.6054 }
             ].map((place) => (
               <div
                 key={place.name}

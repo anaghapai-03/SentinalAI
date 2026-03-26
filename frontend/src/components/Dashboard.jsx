@@ -67,16 +67,16 @@ function Dashboard({ setActiveView }) {
       {/* 🎯 QUICK DESTINATIONS */}
       <div style={{ marginBottom: "2rem" }}>
         <h3 style={{ fontSize: "1rem", letterSpacing: "2px", marginBottom: "1rem" }}>
-          📍 QUICK DESTINATIONS
+          📍 BANGALORE QUICK STOPS
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" }}>
           {[
-            { name: "Station", icon: "🚂" },
-            { name: "Hospital", icon: "🏥" },
-            { name: "Market", icon: "🛒" },
-            { name: "Park", icon: "🌳" },
-            { name: "Tech Hub", icon: "💻" },
-            { name: "Police", icon: "🚔" }
+            { name: "Indiranagar", icon: "🏙️" },
+            { name: "Whitefield", icon: "💼" },
+            { name: "MG Road", icon: "🛍️" },
+            { name: "Koramangala", icon: "🍽️" },
+            { name: "JPNagar", icon: "🏘️" },
+            { name: "BTM Layout", icon: "🏬" }
           ].map((dest) => (
             <button
               key={dest.name}

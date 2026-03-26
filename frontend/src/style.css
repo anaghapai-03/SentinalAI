@@ -161,6 +161,7 @@ body {
   padding: 2rem;
   max-width: 1600px;
   margin: 0 auto;
+  min-height: calc(100vh - 100px);
 }
 
 .dashboard-header {

@@ -4,7 +4,7 @@ function SuggestedRoutes() {
   const routes = [
     {
       id: 1,
-      name: "94 North Corridor",
+      name: "Whitefield - Indiranagar",
       time: "+4 min",
       guardians: "3 guardians",
       lighting: "lit",
@@ -12,17 +12,17 @@ function SuggestedRoutes() {
     },
     {
       id: 2,
-      name: "61 Central Pass",
+      name: "MG Road - Koramangala",
       time: "+0 min",
       guardians: "1 guardian",
-      lighting: "",
+      lighting: "moderate",
       safety: "MODERATE"
     },
     {
       id: 3,
-      name: "23 South Underpass",
+      name: "BTM - Banashankari",
       time: "-3 min",
-      guardians: "",
+      guardians: "none",
       lighting: "dark",
       safety: "AVOID"
     }

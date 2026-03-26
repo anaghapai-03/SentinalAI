@@ -6,9 +6,9 @@ import { useSentinelStore } from "../store/sentinelStore";
 
 function ShortestRoute({ setActiveView }) {
   const userLocation = useSentinelStore((s) => s.userLocation);
-  const [start, setStart] = useState(userLocation || { lat: 37.7749, lng: -122.4194 });
-  const [endLat, setEndLat] = useState(37.7758);
-  const [endLng, setEndLng] = useState(-122.4212);
+  const [start, setStart] = useState(userLocation || { lat: 12.9716, lng: 77.5946 });
+  const [endLat, setEndLat] = useState(12.9850);
+  const [endLng, setEndLng] = useState(77.6050);
   const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

@@ -78,6 +78,161 @@ def get_threat_level(risk):
 
 
 # ─────────────────────────────────────────────────────────────
+# ROUTE PATHFINDING HELPERS
+# ─────────────────────────────────────────────────────────────
+def haversine_distance(lat1, lng1, lat2, lng2):
+    """Calculate distance in km between two coordinates"""
+    R = 6371  # Earth radius in km
+    
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    
+    return R * c
+
+
+def interpolate_route(start, end, num_steps=5):
+    """Generate waypoints between start and end"""
+    waypoints = [start]
+    
+    for i in range(1, num_steps):
+        t = i / num_steps
+        lat = start["lat"] + (end["lat"] - start["lat"]) * t
+        lng = start["lng"] + (end["lng"] - start["lng"]) * t
+        waypoints.append({"lat": lat, "lng": lng})
+    
+    waypoints.append(end)
+    return waypoints
+
+
+def offset_point(lat, lng, offset_lat, offset_lng):
+    """Offset a point by given lat/lng delta"""
+    return {"lat": lat + offset_lat, "lng": lng + offset_lng}
+
+
+def calculate_route_risk(waypoints, risk_zones):
+    """Calculate average and max risk for a route"""
+    if not waypoints:
+        return 50, 50
+    
+    risks = []
+    
+    for point in waypoints:
+        # Find closest risk zone to this waypoint
+        min_distance = float('inf')
+        closest_risk = 25  # Default low risk
+        
+        for zone in risk_zones:
+            zone_lat = zone["geometry"]["coordinates"][1]
+            zone_lng = zone["geometry"]["coordinates"][0]
+            
+            # Distance in degrees (rough approximation)
+            dist = math.sqrt((point["lat"] - zone_lat)**2 + (point["lng"] - zone_lng)**2)
+            
+            if dist < min_distance:
+                min_distance = dist
+                # Risk decreases with distance from zone
+                zone_risk = zone["properties"]["risk_score"]
+                # Decay function: risk is strongest at the zone, weakens with distance
+                distance_factor = max(0.1, 1 - (dist * 8))  # Decay range ~0.125km
+                closest_risk = zone_risk * distance_factor
+        
+        risks.append(closest_risk)
+    
+    return sum(risks) / len(risks) if risks else 25, max(risks) if risks else 25
+
+
+def generate_safe_routes(start, end, risk_zones):
+    """Generate 3 different routes with varying safety profiles"""
+    routes = []
+    
+    # Route 1: Safest Route (avoid high-risk zones)
+    dist_lat = end["lat"] - start["lat"]
+    dist_lng = end["lng"] - start["lng"]
+    
+    # Offset perpendicular to reduce exposure to extreme corners
+    perp_lat = -dist_lng * 0.3
+    perp_lng = dist_lat * 0.3
+    
+    safest_waypoints = interpolate_route(start, end, num_steps=5)
+    # Add safe deflection to middle waypoints
+    for i in range(1, len(safest_waypoints) - 1):
+        safest_waypoints[i] = offset_point(
+            safest_waypoints[i]["lat"],
+            safest_waypoints[i]["lng"],
+            perp_lat * 0.8,
+            perp_lng * 0.8
+        )
+    
+    avg_risk, max_risk = calculate_route_risk(safest_waypoints, risk_zones)
+    
+    routes.append({
+        "id": 1,
+        "name": "🛡️ SAFEST ROUTE",
+        "safety": "SAFEST",
+        "confidence": "98%",
+        "avg_risk": round(avg_risk, 1),
+        "max_risk": round(max_risk, 1),
+        "time": f"+{max(0, int(avg_risk / 10))} min",
+        "guardians": "3-5 guardians" if avg_risk < 35 else "2-3 guardians",
+        "lighting": "Well-lit" if avg_risk < 35 else "Moderate",
+        "coordinates": [[w["lat"], w["lng"]] for w in safest_waypoints],
+        "color": "#22c55e"
+    })
+    
+    # Route 2: Balanced Route (moderate deviation)
+    balanced_waypoints = interpolate_route(start, end, num_steps=5)
+    for i in range(1, len(balanced_waypoints) - 1):
+        balanced_waypoints[i] = offset_point(
+            balanced_waypoints[i]["lat"],
+            balanced_waypoints[i]["lng"],
+            perp_lat * 0.4,
+            perp_lng * 0.4
+        )
+    
+    avg_risk, max_risk = calculate_route_risk(balanced_waypoints, risk_zones)
+    
+    routes.append({
+        "id": 2,
+        "name": "⚡ BALANCED ROUTE",
+        "safety": "MODERATE",
+        "confidence": "95%",
+        "avg_risk": round(avg_risk, 1),
+        "max_risk": round(max_risk, 1),
+        "time": "0 min",
+        "guardians": "1-2 guardians",
+        "lighting": "Varies",
+        "coordinates": [[w["lat"], w["lng"]] for w in balanced_waypoints],
+        "color": "#f97316"
+    })
+    
+    # Route 3: Shortest Route (direct path, highest risk potentially)
+    straight_waypoints = interpolate_route(start, end, num_steps=4)
+    avg_risk, max_risk = calculate_route_risk(straight_waypoints, risk_zones)
+    
+    routes.append({
+        "id": 3,
+        "name": "🚀 FASTEST ROUTE",
+        "safety": "RISKY",
+        "confidence": "85%",
+        "avg_risk": round(avg_risk, 1),
+        "max_risk": round(max_risk, 1),
+        "time": f"-{max(0, int((35 - avg_risk) / 8))} min",
+        "guardians": "None" if avg_risk > 50 else "1 guardian",
+        "lighting": "Dark" if avg_risk > 50 else "Variable",
+        "coordinates": [[w["lat"], w["lng"]] for w in straight_waypoints],
+        "color": "#ef4444" if avg_risk > 50 else "#f97316"
+    })
+    
+    # Sort by safety (lowest avg_risk first)
+    routes.sort(key=lambda x: x["avg_risk"])
+    
+    return routes
+
+
+# ─────────────────────────────────────────────────────────────
 # PREDICTION ENDPOINT
 # ─────────────────────────────────────────────────────────────
 @app.route("/predict", methods=["POST"])
@@ -112,8 +267,8 @@ def predict():
 # ─────────────────────────────────────────────────────────────
 @app.route("/api/risk/point", methods=["GET"])
 def get_point_risk():
-    lat = request.args.get("lat", type=float, default=0)
-    lng = request.args.get("lng", type=float, default=0)
+    lat = request.args.get("lat", type=float, default=12.9716)
+    lng = request.args.get("lng", type=float, default=77.5946)
 
     features = [[
         random.randint(0, 23),
@@ -177,55 +332,77 @@ def get_risk_zones():
         {"lat": center_lat + 0.02, "lng": center_lng - 0.04, "risk_boost": 1.15},  # W side
     ]
     
-    # Generate zones: mix of random + strategic high-risk areas
-    zone_count = random.randint(12, 18)
+    # Generate zones: balanced mix of safe and risky areas
+    zone_count = random.randint(15, 25)
     
     for zone_idx in range(zone_count):
-        # 25% of zones will be in dangerous neighborhoods, 75% random
-        if zone_idx < 3 and zone_idx < len(dangerous_zones):
-            # Generate around dangerous zone
-            danger_zone = dangerous_zones[zone_idx]
-            lat = danger_zone["lat"] + random.uniform(-0.02, 0.02)
-            lng = danger_zone["lng"] + random.uniform(-0.02, 0.02)
-            risk_boost = danger_zone["risk_boost"]
-        else:
-            # Random location
+        # 40% high-risk zones, 35% moderate, 25% safe zones
+        zone_type = random.random()
+        
+        if zone_type < 0.4:  # 40% - High Risk Zones (Dangerous Neighborhoods)
+            # Generate around known dangerous zones
+            danger_zone = random.choice(dangerous_zones)
+            lat = danger_zone["lat"] + random.uniform(-0.015, 0.015)
+            lng = danger_zone["lng"] + random.uniform(-0.015, 0.015)
+            risk_boost = danger_zone["risk_boost"] * random.uniform(1.0, 1.3)
+        elif zone_type < 0.75:  # 35% - Moderate Risk Zones
+            # Random locations with natural variation
             lat = random.uniform(bounds.get("south", 0), bounds.get("north", 1))
             lng = random.uniform(bounds.get("west", 0), bounds.get("east", 1))
-            risk_boost = 1.0
+            risk_boost = random.uniform(0.7, 1.1)  # Moderate boost
+        else:  # 25% - Safe Zones
+            # Well-lit, busy areas near city center
+            lat = center_lat + random.uniform(-0.03, 0.03)
+            lng = center_lng + random.uniform(-0.03, 0.03)
+            risk_boost = random.uniform(0.3, 0.6)  # Low risk
         
         # Calculate distance from center
         distance_from_center = math.sqrt((lat - center_lat)**2 + (lng - center_lng)**2)
         
-        # Population density: edges are sparse, center is busy
-        # Sparse areas (edges) have HIGHER RISK
-        population_density = max(0.1, 0.8 - distance_from_center * 2)
-        
-        # Lighting - varies by time of day
-        if 6 <= hour <= 18:
-            # Daytime: well-lit
-            lighting = random.uniform(0.75, 1.0)
-        elif 19 <= hour <= 21:
-            # Evening: getting darker
-            lighting = random.uniform(0.45, 0.7)
-        else:
-            # Night: poorly-lit
-            lighting = random.uniform(0.1, 0.4)
+        # Population density & Lighting based on zone type
+        if zone_type < 0.4:  # High Risk Zones - low density, poor lighting
+            population_density = random.uniform(0.1, 0.35)  # Sparse areas
+            if 6 <= hour <= 18:
+                lighting = random.uniform(0.5, 0.75)
+            elif 19 <= hour <= 21:
+                lighting = random.uniform(0.3, 0.5)
+            else:
+                lighting = random.uniform(0.05, 0.25)
+        elif zone_type < 0.75:  # Moderate Risk Zones - medium density/lighting
+            population_density = max(0.1, 0.8 - distance_from_center * 2)
+            if 6 <= hour <= 18:
+                lighting = random.uniform(0.7, 0.9)
+            elif 19 <= hour <= 21:
+                lighting = random.uniform(0.45, 0.7)
+            else:
+                lighting = random.uniform(0.15, 0.4)
+        else:  # Safe Zones - high density, well-lit everywhere
+            population_density = random.uniform(0.7, 0.95)  # Busy areas
+            if 6 <= hour <= 18:
+                lighting = random.uniform(0.85, 1.0)  # Well-lit day
+            elif 19 <= hour <= 21:
+                lighting = random.uniform(0.6, 0.85)  # Better lit evening
+            else:
+                lighting = random.uniform(0.4, 0.65)  # Even at night, safer areas have better lighting
         
         # Police presence: inverse correlation with danger
-        # High density areas have more police
-        # Night time has fewer police
-        base_police = min(8, population_density * 8)
+        # High-risk zones have minimal police, safe zones have good coverage
+        if zone_type < 0.4:  # High Risk - minimal police
+            base_police = random.uniform(0.5, 2.0)
+        elif zone_type < 0.75:  # Moderate Risk - medium police
+            base_police = random.uniform(2.0, 5.0)
+        else:  # Safe zones - good police coverage
+            base_police = random.uniform(5.0, 8.0)
         
         if 22 <= hour or hour <= 4:
-            # Late night/early morning - skeleton crew
-            police_presence = max(0.5, base_police * 0.5)
+            # Late night/early morning - skeleton crew (reduce by 40%)
+            police_presence = max(0.3, base_police * 0.6)
         elif 5 <= hour <= 6:
-            # Pre-dawn - minimal
-            police_presence = max(0.5, base_police * 0.6)
+            # Pre-dawn - minimal (reduce by 30%)
+            police_presence = max(0.3, base_police * 0.7)
         elif 17 <= hour <= 21:
             # Evening - peak activity
-            police_presence = base_police * 1.2
+            police_presence = min(8.0, base_police * 1.2)
         else:
             # Day - standard patrols
             police_presence = base_police
@@ -239,12 +416,14 @@ def get_risk_zones():
             police_presence=police_presence
         )
         
-        # Apply risk boost for dangerous neighborhoods
+        # Apply risk boost strategically
         risk_score = min(99.9, risk_score * risk_boost)
         
         # Add stochastic danger: random incidents can spike risk in any zone
-        if random.random() < 0.15:  # 15% chance of incident
-            risk_score = min(99.9, risk_score * 1.4)
+        if random.random() < 0.1:  # 10% chance of incident
+            risk_score = min(99.9, risk_score * 1.3)
+        else:  # Keep some zones consistently safe
+            risk_score = max(0.1, risk_score * random.uniform(0.8, 1.2))
         
         features_list.append({
             "type": "Feature",
@@ -346,8 +525,8 @@ def evaluate_route():
 @app.route("/api/route/compare", methods=["POST"])
 def compare_routes():
     data = request.json
-    start = data.get("start", {"lat": 37.7749, "lng": -122.4194})
-    end = data.get("end", {"lat": 37.7758, "lng": -122.4212})
+    start = data.get("start", {"lat": 12.9716, "lng": 77.5946})
+    end = data.get("end", {"lat": 12.9850, "lng": 77.6050})
 
     # Calculate actual distance in km
     lat_diff = abs(end["lat"] - start["lat"]) * 111
@@ -465,24 +644,167 @@ def compare_routes():
 
 
 # ─────────────────────────────────────────────────────────────
+# SAFE ROUTES CALCULATION (RISK-AWARE PATHFINDING)
+# ─────────────────────────────────────────────────────────────
+@app.route("/api/route/safe-paths", methods=["POST"])
+def get_safe_paths():
+    """
+    Calculate multiple routes from start to destination, optimized for safety.
+    Analyzes risk zones and generates:
+    - Safest route (avoids high-risk areas)
+    - Balanced route (moderate safety vs time)
+    - Fastest route (direct path, higher risk)
+    """
+    data = request.json
+    start = data.get("start", {"lat": 12.9716, "lng": 77.5946})
+    end = data.get("end", {"lat": 12.9850, "lng": 77.6050})
+    
+    # Get risk zones in the area
+    bounds = {
+        "north": max(start["lat"], end["lat"]) + 0.1,
+        "south": min(start["lat"], end["lat"]) - 0.1,
+        "east": max(start["lng"], end["lng"]) + 0.1,
+        "west": min(start["lng"], end["lng"]) - 0.1
+    }
+    
+    features_list = []
+    now = datetime.now()
+    hour = now.hour
+    day_of_week = now.weekday()
+    
+    center_lat = (bounds.get("south", 0) + bounds.get("north", 1)) / 2
+    center_lng = (bounds.get("west", 0) + bounds.get("east", 1)) / 2
+    
+    # Generate risk zones for route evaluation
+    dangerous_zones = [
+        {"lat": center_lat + 0.06, "lng": center_lng - 0.07, "risk_boost": 1.3},
+        {"lat": center_lat - 0.08, "lng": center_lng + 0.08, "risk_boost": 1.25},
+        {"lat": center_lat + 0.02, "lng": center_lng - 0.04, "risk_boost": 1.15},
+    ]
+    
+    zone_count = random.randint(12, 18)
+    
+    for zone_idx in range(zone_count):
+        zone_type = random.random()
+        
+        if zone_type < 0.4:
+            danger_zone = random.choice(dangerous_zones)
+            lat = danger_zone["lat"] + random.uniform(-0.015, 0.015)
+            lng = danger_zone["lng"] + random.uniform(-0.015, 0.015)
+            risk_boost = danger_zone["risk_boost"] * random.uniform(1.0, 1.3)
+        elif zone_type < 0.75:
+            lat = random.uniform(bounds.get("south", 0), bounds.get("north", 1))
+            lng = random.uniform(bounds.get("west", 0), bounds.get("east", 1))
+            risk_boost = random.uniform(0.7, 1.1)
+        else:
+            lat = center_lat + random.uniform(-0.03, 0.03)
+            lng = center_lng + random.uniform(-0.03, 0.03)
+            risk_boost = random.uniform(0.3, 0.6)
+        
+        distance_from_center = math.sqrt((lat - center_lat)**2 + (lng - center_lng)**2)
+        
+        if zone_type < 0.4:
+            population_density = random.uniform(0.1, 0.35)
+            if 6 <= hour <= 18:
+                lighting = random.uniform(0.5, 0.75)
+            elif 19 <= hour <= 21:
+                lighting = random.uniform(0.3, 0.5)
+            else:
+                lighting = random.uniform(0.05, 0.25)
+        elif zone_type < 0.75:
+            population_density = max(0.1, 0.8 - distance_from_center * 2)
+            if 6 <= hour <= 18:
+                lighting = random.uniform(0.7, 0.9)
+            elif 19 <= hour <= 21:
+                lighting = random.uniform(0.45, 0.7)
+            else:
+                lighting = random.uniform(0.15, 0.4)
+        else:
+            population_density = random.uniform(0.7, 0.95)
+            if 6 <= hour <= 18:
+                lighting = random.uniform(0.85, 1.0)
+            elif 19 <= hour <= 21:
+                lighting = random.uniform(0.6, 0.85)
+            else:
+                lighting = random.uniform(0.4, 0.65)
+        
+        if zone_type < 0.4:
+            base_police = random.uniform(0.5, 2.0)
+        elif zone_type < 0.75:
+            base_police = random.uniform(2.0, 5.0)
+        else:
+            base_police = random.uniform(5.0, 8.0)
+        
+        if 22 <= hour or hour <= 4:
+            police_presence = max(0.3, base_police * 0.6)
+        elif 5 <= hour <= 6:
+            police_presence = max(0.3, base_police * 0.7)
+        elif 17 <= hour <= 21:
+            police_presence = min(8.0, base_police * 1.2)
+        else:
+            police_presence = base_police
+        
+        risk_score = predict_risk_score(
+            hour=hour,
+            day_of_week=day_of_week,
+            population_density=population_density,
+            lighting=lighting,
+            police_presence=police_presence
+        )
+        
+        risk_score = min(99.9, risk_score * risk_boost)
+        
+        if random.random() < 0.1:
+            risk_score = min(99.9, risk_score * 1.3)
+        else:
+            risk_score = max(0.1, risk_score * random.uniform(0.8, 1.2))
+        
+        features_list.append({
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [lng, lat]
+            },
+            "properties": {
+                "risk_score": round(risk_score, 1),
+                "threat_level": get_threat_level(risk_score)
+            }
+        })
+    
+    # Generate 3 optimized routes
+    routes = generate_safe_routes(start, end, features_list)
+    
+    return jsonify({
+        "routes": routes,
+        "start": start,
+        "end": end,
+        "timestamp": now.isoformat(),
+        "time_info": {
+            "hour": hour,
+            "period": "NIGHT (HIGH RISK)" if (22 <= hour or hour <= 4) else "EARLY MORNING (ELEVATED)" if (5 <= hour <= 6) else "DAYTIME (LOW RISK)" if (6 < hour < 17) else "EVENING (ELEVATED)"
+        }
+    })
+
+
+# ─────────────────────────────────────────────────────────────
 # DESTINATION SEARCH
 # ─────────────────────────────────────────────────────────────
 @app.route("/api/search/destinations", methods=["GET"])
 def search_destinations():
     query = request.args.get("q", "").lower()
-    user_lat = request.args.get("lat", type=float, default=37.7749)
-    user_lng = request.args.get("lng", type=float, default=-122.4194)
+    user_lat = request.args.get("lat", type=float, default=12.9716)
+    user_lng = request.args.get("lng", type=float, default=77.5946)
     
-    # Base destinations with fixed coordinates
+    # Bangalore destinations with real coordinates
     base_destinations = [
-        {"name": "Central Station", "lat": 37.7847, "lng": -122.4086, "category": "transport", "distance": 0.8},
-        {"name": "City Hospital", "lat": 37.7694, "lng": -122.4862, "category": "health", "distance": 1.2},
-        {"name": "Downtown Market", "lat": 37.7797, "lng": -122.3954, "category": "shopping", "distance": 1.5},
-        {"name": "Central Park", "lat": 37.7749, "lng": -122.4194, "category": "recreation", "distance": 0.3},
-        {"name": "Tech Hub", "lat": 37.7694, "lng": -122.3862, "category": "business", "distance": 2.1},
-        {"name": "University Campus", "lat": 37.7727, "lng": -122.4702, "category": "education", "distance": 1.8},
-        {"name": "Main Police Station", "lat": 37.7749, "lng": -122.4194, "category": "safety", "distance": 0.3},
-        {"name": "Safe Haven Shelter", "lat": 37.7812, "lng": -122.3976, "category": "safety", "distance": 1.1},
+        {"name": "Bangalore City Railway Station", "lat": 12.9638, "lng": 77.5913, "category": "transport", "distance": 0.8},
+        {"name": "Fortis Hospital Bangalore", "lat": 12.9698, "lng": 77.7499, "category": "health", "distance": 1.2},
+        {"name": "Commercial Street", "lat": 12.9749, "lng": 77.6101, "category": "shopping", "distance": 1.5},
+        {"name": "Lalbagh Botanical Garden", "lat": 12.9352, "lng": 77.5872, "category": "recreation", "distance": 0.3},
+        {"name": "Bangalore Tech Park", "lat": 12.9698, "lng": 77.7049, "category": "business", "distance": 2.1},
+        {"name": "Bangalore University", "lat": 13.1939, "lng": 77.5731, "category": "education", "distance": 1.8},
+        {"name": "MG Road Police Station", "lat": 12.9716, "lng": 77.5946, "category": "safety", "distance": 0.3},
+        {"name": "Safe Haven Shelter - BTM", "lat": 12.9352, "lng": 77.6201, "category": "safety", "distance": 1.1},
     ]
     
     # Generate nearby destinations based on user location
