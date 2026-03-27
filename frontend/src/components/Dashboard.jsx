@@ -13,6 +13,33 @@ function Dashboard({ setActiveView }) {
   const userLocation = useSentinelStore((s) => s.userLocation);
   const [simulationMode, setSimulationMode] = useState(false);
   const [threatLevel, setThreatLevel] = useState("low");
+<<<<<<< HEAD
+=======
+  const [userLocation, setUserLocation] = useState({ lat: 12.9716, lng: 77.5946 }); // Bengaluru center
+
+  // Request browser geolocation on mount
+  useEffect(() => {
+    console.log("🔍 Requesting geolocation...");
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("✅ Location granted:", position.coords);
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.warn("❌ Geolocation error:", error.code, error.message);
+          // Keep default Bengaluru location
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      console.warn("❌ Geolocation not available");
+    }
+  }, []);
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
 
   useEffect(() => {
     if (simulationMode) {
@@ -106,15 +133,20 @@ function Dashboard({ setActiveView }) {
 
         {/* LEFT SIDE → MAP */}
         <div className="left-column">
+<<<<<<< HEAD
           {/* ✅ THIS IS THE FIX */}
           <MapView />
 
           <ThreatForecast />
+=======
+          <ThreatMap userLocation={userLocation} />
+          <ThreatForecast userLocation={userLocation} />
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
         </div>
 
         {/* RIGHT SIDE */}
         <div className="right-column">
-          <RiskIndex />
+          <RiskIndex userLocation={userLocation} />
           <SuggestedRoutes />
         </div>
       </div>

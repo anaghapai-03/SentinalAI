@@ -2,21 +2,36 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import os
+import numpy as np
 from datetime import datetime
 import random
+<<<<<<< HEAD
 import math
+=======
+import openrouteservice
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
 
 app = Flask(__name__)
 CORS(app)
 
 # ─────────────────────────────────────────────────────────────
+<<<<<<< HEAD
 # LOAD TRAINED MODEL AND SCALER
+=======
+# 🔑 ADD YOUR API KEY HERE
+# ─────────────────────────────────────────────────────────────
+client = openrouteservice.Client(key="YOUR_API_KEY")
+
+# ─────────────────────────────────────────────────────────────
+# LOAD MODELS
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
 # ─────────────────────────────────────────────────────────────
 model = None
 scaler = None
 
 try:
     base_dir = os.path.dirname(__file__)
+<<<<<<< HEAD
     model_path = os.path.abspath(os.path.join(base_dir, "../model/sentinel_model.pkl"))
     scaler_path = os.path.abspath(os.path.join(base_dir, "../model/scaler.pkl"))
     
@@ -231,10 +246,24 @@ def generate_safe_routes(start, end, risk_zones):
     
     return routes
 
+=======
+    model_dir = os.path.abspath(os.path.join(base_dir, "../model"))
+    
+    risk_model = joblib.load(os.path.join(model_dir, "risk_model.pkl"))
+    route_model = joblib.load(os.path.join(model_dir, "route_model.pkl"))
+
+    print("✅ Models loaded successfully")
+
+except Exception as e:
+    print(f"❌ Model load error: {e}")
+    risk_model = None
+    route_model = None
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
 
 # ─────────────────────────────────────────────────────────────
-# PREDICTION ENDPOINT
+# HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────────
+<<<<<<< HEAD
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.json
@@ -264,12 +293,54 @@ def predict():
 
 # ─────────────────────────────────────────────────────────────
 # POINT RISK
+=======
+def get_threat_level(score):
+    if score >= 70:
+        return "HIGH"
+    elif score >= 40:
+        return "MODERATE"
+    return "SAFE"
+
+
+def calculate_route_risk(coords):
+    risks = []
+
+    for coord in coords[::10]:  # sample points
+        lat, lng = coord[1], coord[0]
+
+        hour = datetime.now().hour
+        day = datetime.now().weekday()
+
+        lighting = random.uniform(40, 90)
+        police_presence = random.uniform(30, 80)
+        incidents = np.random.poisson(3)
+        crowd = random.uniform(20, 80)
+        traffic = random.uniform(30, 90)
+
+        features = np.array([[ 
+            hour, day, lighting, police_presence,
+            incidents, crowd, lat, lng, traffic
+        ]])
+
+        if risk_model:
+            risk = float(risk_model.predict(features)[0])
+        else:
+            risk = random.uniform(20, 80)
+
+        risks.append(risk)
+
+    return sum(risks) / len(risks)
+
+# ─────────────────────────────────────────────────────────────
+# 📍 POINT RISK
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
 # ─────────────────────────────────────────────────────────────
 @app.route("/api/risk/point", methods=["GET"])
 def get_point_risk():
     lat = request.args.get("lat", type=float, default=12.9716)
     lng = request.args.get("lng", type=float, default=77.5946)
 
+<<<<<<< HEAD
     features = [[
         random.randint(0, 23),
         random.randint(0, 6),
@@ -281,21 +352,36 @@ def get_point_risk():
     if model:
         risk_score = float(model.predict_proba(features)[0][1] * 100)
         confidence = float(max(model.predict_proba(features)[0]))
+=======
+    hour = datetime.now().hour
+    day = datetime.now().weekday()
+
+    lighting = random.uniform(40, 90)
+    police = random.uniform(30, 80)
+    incidents = np.random.poisson(3)
+    crowd = random.uniform(20, 80)
+    traffic = random.uniform(30, 90)
+
+    features = np.array([[ 
+        hour, day, lighting, police, incidents,
+        crowd, lat, lng, traffic
+    ]])
+
+    if risk_model:
+        risk_score = float(risk_model.predict(features)[0])
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
     else:
-        risk_score = random.uniform(0, 100)
-        confidence = random.uniform(0.8, 0.99)
+        risk_score = random.uniform(20, 80)
 
     return jsonify({
         "lat": lat,
         "lng": lng,
         "risk_score": round(risk_score, 2),
-        "threat_level": get_threat_level(risk_score),
-        "confidence": round(confidence, 2),
-        "timestamp": datetime.now().isoformat()
+        "threat_level": get_threat_level(risk_score)
     })
 
-
 # ─────────────────────────────────────────────────────────────
+<<<<<<< HEAD
 # ZONES (USING TRAINED MODEL FOR REAL PREDICTIONS)
 # ─────────────────────────────────────────────────────────────
 @app.route("/api/risk/zones", methods=["POST"])
@@ -829,21 +915,85 @@ def search_destinations():
     return jsonify({
         "results": filtered[:8],
         "user_location": {"lat": user_lat, "lng": user_lng}
+=======
+# 🗺️ ROUTE SUGGESTION (REAL)
+# ─────────────────────────────────────────────────────────────
+@app.route("/api/route/suggest", methods=["POST"])
+def suggest_route():
+    data = request.json or {}
+
+    start = data.get("start")   # [lng, lat]
+    end = data.get("end")
+
+    if not start or not end:
+        return jsonify({"error": "Start and End required"}), 400
+
+    try:
+        routes_data = client.directions(
+            coordinates=[start, end],
+            profile='driving-car',
+            format='geojson',
+            alternative_routes=True
+        )
+
+        routes = []
+
+        for idx, route in enumerate(routes_data['features']):
+            coords = route['geometry']['coordinates']
+
+            distance = route['properties']['summary']['distance'] / 1000
+            duration = route['properties']['summary']['duration'] / 60
+
+            risk_score = calculate_route_risk(coords)
+
+            routes.append({
+                "id": f"route_{idx}",
+                "coords": coords,
+                "distance": round(distance, 2),
+                "time": round(duration),
+                "risk_score": round(risk_score, 2)
+            })
+
+        shortest = min(routes, key=lambda x: x["distance"])
+        safest = min(routes, key=lambda x: x["risk_score"])
+
+        return jsonify({
+            "shortest": shortest,
+            "safest": safest,
+            "all_routes": routes
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+# ─────────────────────────────────────────────────────────────
+# 📊 STATS
+# ─────────────────────────────────────────────────────────────
+@app.route("/api/risk/stats", methods=["GET"])
+def stats():
+    return jsonify({
+        "city_risk": random.uniform(30, 70),
+        "incidents_24h": random.randint(10, 40)
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
     })
 
-
 # ─────────────────────────────────────────────────────────────
-# HEALTH CHECK
+# ❤️ HEALTH
 # ─────────────────────────────────────────────────────────────
-@app.route("/health", methods=["GET"])
+@app.route("/health")
 def health():
     return jsonify({
-        "status": "healthy",
-        "model_loaded": model is not None,
-        "timestamp": datetime.now().isoformat()
+        "status": "running",
+        "model_loaded": risk_model is not None
     })
 
+<<<<<<< HEAD
 
+=======
+# ─────────────────────────────────────────────────────────────
+# RUN
+# ─────────────────────────────────────────────────────────────
+>>>>>>> 6ae17eac1985bbdc11bf81077777242c4dfe8da6
 if __name__ == "__main__":
     print("\n🚀 SENTINEL backend starting...")
     print(f"📊 Model loaded: {model is not None}")
